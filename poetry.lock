@@ -55,6 +55,14 @@ python-dateutil = ">=2.7"
 setuptools_scm = ">=4"
 
 [[package]]
+name = "normal"
+version = "1.2.0"
+description = "Indentation and optional arguement"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "numpy"
 version = "1.22.2"
 description = "NumPy is the fundamental package for array computing with Python."
@@ -154,7 +162,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "942781401fd516d7360010fa13b2c3f474d13aebc2a04b153de706df9b922e64"
+content-hash = "512d2e5d23d15fc97b49b0d7c2eb396200a224b7f12db0be5e3dfef861e96ef6"
 
 [metadata.files]
 cycler = [
@@ -247,6 +255,9 @@ matplotlib = [
     {file = "matplotlib-3.5.1-pp37-pypy37_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:6803299cbf4665eca14428d9e886de62e24f4223ac31ab9c5d6d5339a39782c7"},
     {file = "matplotlib-3.5.1-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:14334b9902ec776461c4b8c6516e26b450f7ebe0b3ef8703bf5cdfbbaecf774a"},
     {file = "matplotlib-3.5.1.tar.gz", hash = "sha256:b2e9810e09c3a47b73ce9cab5a72243a1258f61e7900969097a817232246ce1c"},
+]
+normal = [
+    {file = "normal-1.2.0.zip", hash = "sha256:e919a9729e5b6d01fc58b5f3957cefba910dc94a8ddca9ab6801d45bd8d111d9"},
 ]
 numpy = [
     {file = "numpy-1.22.2-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:515a8b6edbb904594685da6e176ac9fbea8f73a5ebae947281de6613e27f1956"},

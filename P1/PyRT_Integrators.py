@@ -70,7 +70,9 @@ class DepthIntegrator(Integrator):
 
     def compute_color(self, ray):
         # ASSIGNMENT 1.3: PUT YOUR CODE HERE
-        pass
+        hit = self.scene.closest_hit(ray)
+        color = max(1 - hit.hit_distance / self.max_depth, 0)
+        return RGBColor(color, color, color)
 
 
 class NormalIntegrator(Integrator):
@@ -80,7 +82,19 @@ class NormalIntegrator(Integrator):
 
     def compute_color(self, ray):
         # ASSIGNMENT 1.3: PUT YOUR CODE HERE
-        pass
+        hit = self.scene.closest_hit(ray)
+
+        # If there is a hit we compute the color, otherwise we return black.
+        # If we didn't do this the background color would be gray since we are
+        # adding (1,1,1) to the zero normal vector and then dividing by 2.
+        if hit.has_hit:
+            if type(hit.normal) is Vector3D:
+                c = (hit.normal + Vector3D(1, 1, 1)) / 2
+                return RGBColor(c.x, c.y, c.z)
+            else:
+                c = (hit.normal + [1, 1, 1]) / 2
+                return RGBColor(c[0], c[1], c[2])
+        return BLACK
 
 
 class PhongIntegrator(Integrator):
@@ -90,7 +104,56 @@ class PhongIntegrator(Integrator):
 
     def compute_color(self, ray):
         # ASSIGNMENT 1.4: PUT YOUR CODE HERE
-        pass
+        hit = self.scene.closest_hit(ray)
+        light_source = self.scene.pointLights[0]
+        hit_point = hit.hit_point if type(hit.hit_point) is Vector3D else Vector3D(hit.hit_point[0], hit.hit_point[1],
+                                                                                   hit.hit_point[2])
+        dir = Normalize(hit_point - light_source.pos)
+        aux_obj = self.scene.closest_hit(Ray(light_source.pos, dir))
+        if hit.has_hit:
+            la = self.compute_ambient_reflection(hit)
+            if hit.primitive_index == aux_obj.primitive_index:
+                ld = self.compute_difuse_reflection(hit)
+                ls = self.compute_specular_reflection(hit)
+                return la + ld + ls
+            return la
+        return BLACK
+
+    def compute_ambient_reflection(self, hit):
+        o = self.scene.object_list[hit.primitive_index]
+        kd = o.get_BRDF().kd
+        ia = self.scene.i_a
+        return ia.multiply(kd)
+
+    def compute_difuse_reflection(self, hit):
+        o = self.scene.object_list[hit.primitive_index]
+        light_source = self.scene.pointLights[0]
+        kd = o.get_BRDF().kd
+        normal = hit.normal if type(hit.normal) is Vector3D else Vector3D(hit.normal[0], hit.normal[1], hit.normal[2])
+        hit_point = hit.hit_point if type(hit.hit_point) is Vector3D else Vector3D(hit.hit_point[0], hit.hit_point[1],
+                                                                                   hit.hit_point[2])
+        wi = Normalize(light_source.pos - hit_point)
+        wo = Vector3D(0, 0, 0)
+        if hit_point.x != 0 and hit_point.y != 0 and hit_point.z != 0:
+            wo = Normalize(hit_point * -1)
+        L = o.get_BRDF().get_value(wi, wo, normal)
+        return L.multiply(light_source.intensity * hit.hit_distance ** -2)
+
+    def compute_specular_reflection(self, hit):
+        o = self.scene.object_list[hit.primitive_index]
+        light_source = self.scene.pointLights[0]
+        kd = o.get_BRDF().kd
+        normal = hit.normal if type(hit.normal) is Vector3D else Vector3D(hit.normal[0], hit.normal[1], hit.normal[2])
+        hit_point = hit.hit_point if type(hit.hit_point) is Vector3D else Vector3D(hit.hit_point[0], hit.hit_point[1],
+                                                                                   hit.hit_point[2])
+        wi = Normalize(light_source.pos - hit_point)
+        wo = Vector3D(0, 0, 0)
+        if hit_point.x != 0 and hit_point.y != 0 and hit_point.z != 0:
+            wo = Normalize(hit_point * -1)
+
+        s = 1
+        r = normal.multiply(wi).multiply(normal) * 2 - wi
+        return kd.multiply(light_source.intensity * hit.hit_distance ** -2) * (max(0, Dot(wo, r)) ** s)
 
 
 class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
