@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "mlcg-lab"
+version = "0.1.0"
+description = ""
+authors = ["Santiago del Rey <59149491+santidrj@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+opencv-python = "^4.5.5"
+numpy = "^1.22.2"
+matplotlib = "^3.5.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
