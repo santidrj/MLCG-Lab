@@ -88,7 +88,7 @@ class NormalIntegrator(Integrator):
         # If we didn't do this the background color would be gray since we are
         # adding (1,1,1) to the zero normal vector and then dividing by 2.
         if hit.has_hit:
-            if type(hit.normal) is Vector3D:
+            if isinstance(hit.normal, Vector3D):
                 c = (hit.normal + Vector3D(1, 1, 1)) / 2
                 return RGBColor(c.x, c.y, c.z)
             else:
@@ -116,11 +116,11 @@ class PhongIntegrator(Integrator):
             hit_point = hit.hit_point if isinstance(hit.hit_point, Vector3D) else Vector3D(hit.hit_point[0],
                                                                                            hit.hit_point[1],
                                                                                            hit.hit_point[2])
-            dir = Normalize(hit_point - light_source.pos)
-            aux_obj = self.scene.closest_hit(Ray(light_source.pos, dir))
+            direction = Normalize(hit_point - light_source.pos)
+            aux_obj = self.scene.closest_hit(Ray(light_source.pos, direction))
             if hit.has_hit:
                 if hit.primitive_index == aux_obj.primitive_index:
-                    ld = self.compute_difuse_reflection(hit)
+                    ld = self.compute_diffuse_reflection(hit, light_source)
                     color += ld
         return color
 
@@ -130,13 +130,13 @@ class PhongIntegrator(Integrator):
         ia = self.scene.i_a
         return ia.multiply(kd)
 
-    def compute_difuse_reflection(self, hit):
+    def compute_diffuse_reflection(self, hit, light_source):
         o = self.scene.object_list[hit.primitive_index]
-        light_source = self.scene.pointLights[0]
-        kd = o.get_BRDF().kd
-        normal = hit.normal if type(hit.normal) is Vector3D else Vector3D(hit.normal[0], hit.normal[1], hit.normal[2])
-        hit_point = hit.hit_point if type(hit.hit_point) is Vector3D else Vector3D(hit.hit_point[0], hit.hit_point[1],
-                                                                                   hit.hit_point[2])
+        normal = hit.normal if isinstance(hit.normal, Vector3D) else Vector3D(hit.normal[0], hit.normal[1],
+                                                                              hit.normal[2])
+        hit_point = hit.hit_point if isinstance(hit.hit_point, Vector3D) else Vector3D(hit.hit_point[0],
+                                                                                       hit.hit_point[1],
+                                                                                       hit.hit_point[2])
         wi = Normalize(light_source.pos - hit_point)
         wo = Vector3D(0, 0, 0)
         if hit_point.x != 0 and hit_point.y != 0 and hit_point.z != 0:
