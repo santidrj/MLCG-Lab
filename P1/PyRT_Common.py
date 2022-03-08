@@ -65,10 +65,7 @@ class Vector3D:
     def __repr__(self):
         return f'Vector3D({self.x}, {self.y}, {self.z})'
 
-    def __pow__(self, power, modulo=None):
-        return Vector3D(self.x ** power, self.y ** power, self.z ** power)
-
-    # this alows us to multipy by another Vector3D
+    # this allows us to multipy by another Vector3D
     def multiply(self, c):
         return Vector3D(self.x * c.x, self.y * c.y, self.z * c.z)
 
@@ -140,10 +137,6 @@ class RGBColor:
 
     def __repr__(self):
         return f'RGBColor({self.r}, {self.g}, {self.b})'
-
-    @staticmethod
-    def from_Vector3D(vector: Vector3D):
-        return RGBColor(vector.x, vector.y, vector.z)
 
 
 # Constants
