@@ -105,19 +105,24 @@ class PhongIntegrator(Integrator):
     def compute_color(self, ray):
         # ASSIGNMENT 1.4: PUT YOUR CODE HERE
         hit = self.scene.closest_hit(ray)
-        light_source = self.scene.pointLights[0]
-        hit_point = hit.hit_point if type(hit.hit_point) is Vector3D else Vector3D(hit.hit_point[0], hit.hit_point[1],
-                                                                                   hit.hit_point[2])
-        dir = Normalize(hit_point - light_source.pos)
-        aux_obj = self.scene.closest_hit(Ray(light_source.pos, dir))
+        # light_source = self.scene.pointLights[0]
+
+        la = self.compute_ambient_reflection(hit)
         if hit.has_hit:
-            la = self.compute_ambient_reflection(hit)
-            if hit.primitive_index == aux_obj.primitive_index:
-                ld = self.compute_difuse_reflection(hit)
-                ls = self.compute_specular_reflection(hit)
-                return la + ld + ls
-            return la
-        return BLACK
+            color = la
+        else:
+            color = BLACK
+        for light_source in self.scene.pointLights:
+            hit_point = hit.hit_point if isinstance(hit.hit_point, Vector3D) else Vector3D(hit.hit_point[0],
+                                                                                           hit.hit_point[1],
+                                                                                           hit.hit_point[2])
+            dir = Normalize(hit_point - light_source.pos)
+            aux_obj = self.scene.closest_hit(Ray(light_source.pos, dir))
+            if hit.has_hit:
+                if hit.primitive_index == aux_obj.primitive_index:
+                    ld = self.compute_difuse_reflection(hit)
+                    color += ld
+        return color
 
     def compute_ambient_reflection(self, hit):
         o = self.scene.object_list[hit.primitive_index]
@@ -138,22 +143,6 @@ class PhongIntegrator(Integrator):
             wo = Normalize(hit_point * -1)
         L = o.get_BRDF().get_value(wi, wo, normal)
         return L.multiply(light_source.intensity * hit.hit_distance ** -2)
-
-    def compute_specular_reflection(self, hit):
-        o = self.scene.object_list[hit.primitive_index]
-        light_source = self.scene.pointLights[0]
-        kd = o.get_BRDF().kd
-        normal = hit.normal if type(hit.normal) is Vector3D else Vector3D(hit.normal[0], hit.normal[1], hit.normal[2])
-        hit_point = hit.hit_point if type(hit.hit_point) is Vector3D else Vector3D(hit.hit_point[0], hit.hit_point[1],
-                                                                                   hit.hit_point[2])
-        wi = Normalize(light_source.pos - hit_point)
-        wo = Vector3D(0, 0, 0)
-        if hit_point.x != 0 and hit_point.y != 0 and hit_point.z != 0:
-            wo = Normalize(hit_point * -1)
-
-        s = 1
-        r = normal.multiply(wi).multiply(normal) * 2 - wi
-        return kd.multiply(light_source.intensity * hit.hit_distance ** -2) * (max(0, Dot(wo, r)) ** s)
 
 
 class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
