@@ -132,17 +132,46 @@ class PhongIntegrator(Integrator):
 
     def compute_diffuse_reflection(self, hit, light_source):
         o = self.scene.object_list[hit.primitive_index]
-        normal = hit.normal if isinstance(hit.normal, Vector3D) else Vector3D(hit.normal[0], hit.normal[1],
-                                                                              hit.normal[2])
-        hit_point = hit.hit_point if isinstance(hit.hit_point, Vector3D) else Vector3D(hit.hit_point[0],
-                                                                                       hit.hit_point[1],
-                                                                                       hit.hit_point[2])
+        hit_point, normal = get_hit_data(hit)
         wi = Normalize(light_source.pos - hit_point)
         wo = Vector3D(0, 0, 0)
         if hit_point.x != 0 and hit_point.y != 0 and hit_point.z != 0:
             wo = Normalize(hit_point * -1)
         L = o.get_BRDF().get_value(wi, wo, normal)
         return L.multiply(light_source.intensity * hit.hit_distance ** -2)
+
+
+# ############################################################################################## #
+# Given a list of hemispherical functions (function_list) and a set of sample positions over the #
+#  hemisphere (sample_pos_), return the corresponding sample values. Each sample value results   #
+#  from evaluating the product of all the functions in function_list for a particular sample     #
+#  position.                                                                                     #
+# ############################################################################################## #
+def collect_samples(function_list, sample_pos_):
+    sample_values = []
+    for i in range(len(sample_pos_)):
+        val = 1
+        for j in range(len(function_list)):
+            val *= function_list[j].eval(sample_pos_[i])
+        sample_values.append(RGBColor(val, 0, 0))  # for convenience, we'll only use the red channel
+    return sample_values
+
+
+def compute_estimate_cmc(sample_prob_, sample_values_):
+    values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
+    result = BLACK
+    for value in values:
+        result += value
+    return result / len(sample_prob_)
+
+
+def get_hit_data(hit):
+    normal = hit.normal if isinstance(hit.normal, Vector3D) else Vector3D(hit.normal[0], hit.normal[1],
+                                                                          hit.normal[2])
+    hit_point = hit.hit_point if isinstance(hit.hit_point, Vector3D) else Vector3D(hit.hit_point[0],
+                                                                                   hit.hit_point[1],
+                                                                                   hit.hit_point[2])
+    return hit_point, normal
 
 
 class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
@@ -153,7 +182,36 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
         self.n_samples = n
 
     def compute_color(self, ray):
-        pass
+        hit = self.scene.closest_hit(ray)
+        if hit.has_hit:
+            cosine_term = CosineLobe(1)
+            hit_point, normal = get_hit_data(hit)
+
+            sample_set, sample_prob = sample_set_hemisphere(self.n_samples, UniformPDF())
+            li = []
+            brdf = []
+            cosine = []
+            for sample in sample_set:
+                centered_sample = center_around_normal(sample, normal)
+                second_ray = Ray(hit_point, centered_sample)
+
+                secondary_hit = self.scene.closest_hit(second_ray)
+                if secondary_hit.has_hit:
+                    o = self.scene.object_list[hit.primitive_index]
+                    li.append(o.emission)
+                    brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
+                else:
+                    if self.scene.env_map:
+                        li.append(self.scene.env_map.getValue(sample))
+                    else:
+                        li.append(BLACK)
+                    brdf.append(BLACK)
+                cosine.append(cosine_term.eval(sample))
+
+            sample_values = [l.multiply(b) * c for l, b, c in zip(li, brdf, cosine)]
+            return compute_estimate_cmc(sample_prob, li)
+
+        return self.scene.env_map.getValue(ray.d)
 
 
 class BayesianMonteCarloIntegrator(Integrator):
