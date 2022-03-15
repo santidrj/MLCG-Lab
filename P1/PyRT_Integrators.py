@@ -122,6 +122,7 @@ class PhongIntegrator(Integrator):
                 if hit.primitive_index == aux_obj.primitive_index:
                     ld = self.compute_diffuse_reflection(hit, light_source)
                     color += ld
+
         return color
 
     def compute_ambient_reflection(self, hit):
@@ -203,7 +204,7 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
                     li.append(o.emission)
                 else:
                     if self.scene.env_map:
-                        li.append(self.scene.env_map.getValue(sample))
+                        li.append(self.scene.env_map.getValue(centered_sample))
                     else:
                         li.append(BLACK)
 
