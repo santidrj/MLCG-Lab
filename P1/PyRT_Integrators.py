@@ -184,7 +184,8 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
     def compute_color(self, ray):
         hit = self.scene.closest_hit(ray)
         if hit.has_hit:
-            cosine_term = CosineLobe(1)
+            exp = 1
+            cosine_term = CosineLobe(exp)
             hit_point, normal = get_hit_data(hit)
 
             sample_set, sample_prob = sample_set_hemisphere(self.n_samples, UniformPDF())
@@ -196,20 +197,23 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
                 second_ray = Ray(hit_point, centered_sample)
 
                 secondary_hit = self.scene.closest_hit(second_ray)
+                _, s_normal = get_hit_data(secondary_hit)
                 if secondary_hit.has_hit:
-                    o = self.scene.object_list[hit.primitive_index]
+                    o = self.scene.object_list[secondary_hit.primitive_index]
                     li.append(o.emission)
-                    brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
                 else:
                     if self.scene.env_map:
                         li.append(self.scene.env_map.getValue(sample))
                     else:
                         li.append(BLACK)
-                    brdf.append(BLACK)
+
+                o = self.scene.object_list[hit.primitive_index]
+                brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
                 cosine.append(cosine_term.eval(sample))
+                # cosine.append(Dot(normal, sample) ** exp)
 
             sample_values = [l.multiply(b) * c for l, b, c in zip(li, brdf, cosine)]
-            return compute_estimate_cmc(sample_prob, li)
+            return compute_estimate_cmc(sample_prob, sample_values)
 
         return self.scene.env_map.getValue(ray.d)
 

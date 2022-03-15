@@ -22,8 +22,11 @@ def collect_samples(function_list, sample_pos_):
 # this function returns the classic Monte Carlo (cmc) estimate of the integral.               #
 # ########################################################################################### #
 def compute_estimate_cmc(sample_prob_, sample_values_):
-    return np.sum(np.array([cosine_term.eval(omega) for omega in sample_values_]) / np.array(sample_prob_)) / len(
-        sample_values_)
+    values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
+    result = BLACK
+    for value in values:
+        result += value
+    return result / len(sample_prob_)
 
 
 # ----------------------------- #
@@ -95,8 +98,9 @@ for k, ns in enumerate(ns_vector):
     avg_error = []
     for _ in range(n_iterations):
         sample_set, sample_prob = sample_set_hemisphere(ns, uniform_pdf)
-        estimate_cmc = compute_estimate_cmc(sample_prob, sample_set)
-        abs_error = abs(ground_truth - estimate_cmc)
+        sample_values = collect_samples(integrand, sample_set)
+        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values)
+        abs_error = abs(ground_truth - estimate_cmc.r)
         avg_error.append(abs_error)
 
     results[k, 0] = np.mean(avg_error)
