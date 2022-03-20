@@ -211,7 +211,6 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
                 o = self.scene.object_list[hit.primitive_index]
                 brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
                 cosine.append(cosine_term.eval(sample))
-                # cosine.append(Dot(normal, sample) ** exp)
 
             sample_values = [l.multiply(b) * c for l, b, c in zip(li, brdf, cosine)]
             return compute_estimate_cmc(sample_prob, sample_values)
