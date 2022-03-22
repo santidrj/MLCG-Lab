@@ -1,5 +1,5 @@
 from PyRT_Common import *
-import matplotlib.pyplot as plt
+
 
 # ############################################################################################## #
 # Given a list of hemispherical functions (function_list) and a set of sample positions over the #
@@ -22,9 +22,11 @@ def collect_samples(function_list, sample_pos_):
 # this function returns the classic Monte Carlo (cmc) estimate of the integral.               #
 # ########################################################################################### #
 def compute_estimate_cmc(sample_prob_, sample_values_):
-    # TODO: PUT YOUR CODE HERE
-    return 0
-
+    values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
+    result = BLACK
+    for value in values:
+        result += value
+    return result / len(sample_prob_)
 
 
 # ----------------------------- #
@@ -38,14 +40,14 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 # #################################################################### #
 methods_label = [('MC', 'o')]
 # methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
-n_methods = len(methods_label) # number of tested monte carlo methods
+n_methods = len(methods_label)  # number of tested monte carlo methods
 
 # ######################################################## #
 #                   STEP 1                                 #
 # Set up the function we wish to integrate                 #
 # We will consider integrals of the form: L_i * brdf * cos #
 # ######################################################## #
-#l_i = ArchEnvMap()
+# l_i = ArchEnvMap()
 l_i = Constant(1)
 kd = 1
 brdf = Constant(kd)
@@ -57,8 +59,8 @@ integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
 # Set-up the pdf used to sample the hemisphere #
 # ############################################ #
 uniform_pdf = UniformPDF()
-#exponent = 1
-#cosine_pdf = CosinePDF(exponent)
+# exponent = 1
+# cosine_pdf = CosinePDF(exponent)
 
 
 # ###################################################################### #
@@ -67,7 +69,6 @@ uniform_pdf = UniformPDF()
 # ###################################################################### #
 ground_truth = cosine_term.get_integral()  # Assuming that L_i = 1 and BRDF = 1
 print('Ground truth: ' + str(ground_truth))
-
 
 # ################### #
 #     STEP 3          #
@@ -79,10 +80,10 @@ ns_step = 20  # step for the number of samples
 ns_vector = np.arange(start=ns_min, stop=ns_max, step=ns_step)  # the number of samples to use per estimate
 n_estimates = 1  # the number of estimates to perform for each value in ns_vector
 n_samples_count = len(ns_vector)
+n_iterations = 1000  # number of iterations for averaging the MC estimator
 
 # Initialize a matrix of estimate error at zero
 results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
-
 
 # ################################# #
 #          MAIN LOOP                #
@@ -93,12 +94,16 @@ for k, ns in enumerate(ns_vector):
 
     print(f'Computing estimates using {ns} samples')
 
-    # TODO: Estimate the value of the integral using CMC
-    estimate_cmc = 0
-    abs_error = abs(ground_truth - estimate_cmc)
+    # Estimate the value of the integral using CMC
+    avg_error = []
+    for _ in range(n_iterations):
+        sample_set, sample_prob = sample_set_hemisphere(ns, uniform_pdf)
+        sample_values = collect_samples(integrand, sample_set)
+        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values)
+        abs_error = abs(ground_truth - estimate_cmc.r)
+        avg_error.append(abs_error)
 
-    results[k, 0] = abs_error
-
+    results[k, 0] = np.mean(avg_error)
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #
