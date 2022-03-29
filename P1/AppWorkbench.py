@@ -1,3 +1,4 @@
+from GaussianProcess import compute_estimate_cmc
 from P1.GaussianProcess import GP, SobolevCov
 from PyRT_Common import *
 
@@ -22,12 +23,12 @@ def collect_samples(function_list, sample_pos_):
 # Given a set of sample values of an integrand, as well as their corresponding probabilities, #
 # this function returns the classic Monte Carlo (cmc) estimate of the integral.               #
 # ########################################################################################### #
-def compute_estimate_cmc(sample_prob_, sample_values_):
-    values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
-    result = BLACK
-    for value in values:
-        result += value
-    return result / len(sample_prob_)
+# def compute_estimate_cmc(sample_prob_, sample_values_):
+#     values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
+#     result = BLACK
+#     for value in values:
+#         result += value
+#     return result / len(sample_prob_)
 
 
 # ----------------------------- #
@@ -76,7 +77,7 @@ print('Ground truth: ' + str(ground_truth))
 # Experimental set-up #
 # ################### #
 ns_min = 20  # minimum number of samples (ns) used for the Monte Carlo estimate
-ns_max = 101  # maximum number of samples (ns) used for the Monte Carlo estimate
+ns_max = 81  # maximum number of samples (ns) used for the Monte Carlo estimate
 ns_step = 20  # step for the number of samples
 ns_vector = np.arange(start=ns_min, stop=ns_max, step=ns_step)  # the number of samples to use per estimate
 n_estimates = 100  # the number of estimates to perform for each value in ns_vector

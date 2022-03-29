@@ -1,3 +1,4 @@
+from GaussianProcess import compute_estimate_cmc
 from PyRT_Common import *
 
 
@@ -147,12 +148,6 @@ class PhongIntegrator(Integrator):
 #  from evaluating the product of all the functions in function_list for a particular sample     #
 #  position.                                                                                     #
 # ############################################################################################## #
-def compute_estimate_cmc(sample_prob_, sample_values_):
-    values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
-    result = BLACK
-    for value in values:
-        result += value
-    return result / len(sample_prob_)
 
 
 def get_hit_data(hit):

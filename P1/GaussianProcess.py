@@ -49,7 +49,7 @@ def collect_samples(function_list, sample_pos_):
 
 def compute_estimate_cmc(sample_prob_, sample_values_):
     values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
-    if isinstance(values, Vector3D):
+    if isinstance(values, Vector3D) or isinstance(values, RGBColor):
         result = BLACK
     else:
         result = 0
