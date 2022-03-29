@@ -1,7 +1,5 @@
-from abc import ABC, abstractmethod  # Abstract Base Class
 from math import exp
 
-import numpy as np
 from numpy import ndarray
 
 from PyRT_Common import *
@@ -37,6 +35,27 @@ class SECov(CovarianceFunction):
     def eval(self, omega_i, omega_j):
         r = Length(omega_i - omega_j)  # Euclidean distance between the samples
         return exp(-(r ** 2) / (2 * self.l ** 2))
+
+
+def collect_samples(function_list, sample_pos_):
+    sample_values = []
+    for i in range(len(sample_pos_)):
+        val = 1
+        for j in range(len(function_list)):
+            val *= function_list[j].eval(sample_pos_[i])
+        sample_values.append(RGBColor(val, 0, 0))  # for convenience, we'll only use the red channel
+    return sample_values
+
+
+def compute_estimate_cmc(sample_prob_, sample_values_):
+    values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
+    if isinstance(values, Vector3D):
+        result = BLACK
+    else:
+        result = 0
+    for value in values:
+        result += value
+    return result / len(sample_prob_)
 
 
 # Gaussian Process class for the unit hemisphere
@@ -97,7 +116,9 @@ class GP:
         # ################## #
         # ADD YOUR CODE HERE #
         # ################## #
-
+        for i, sample_p in enumerate(self.samples_pos):
+            for j, sample_p2 in enumerate(self.samples_pos):
+                Q[i, j] = self.cov_func.eval(sample_p, sample_p2)
 
         # Add a diagonal of a small amount of noise to avoid numerical instability problems
         Q = Q + np.eye(n, n) * self.noise ** 2
@@ -132,18 +153,19 @@ class GP:
             # ################## #
             # ADD YOUR CODE HERE #
             # ################## #
-
-
+            sample_values = [self.cov_func.eval(omega_i, sample) for sample in sample_set_z]
+            z_vec[i] = compute_estimate_cmc(probab, sample_values)
 
         return z_vec
 
-    # Method in charge of computing the BMC integral estimate (assuming the the prior mean function has value 0)
+    # Method in charge of computing the BMC integral estimate (assuming that the prior mean function has value 0)
     def compute_integral_BMC(self):
         res = BLACK
 
         # ################## #
         # ADD YOUR CODE HERE #
         # ################## #
-
+        for w, s in zip(self.weights, self.samples_val):
+            res += s * w
 
         return res

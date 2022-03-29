@@ -1,3 +1,4 @@
+from P1.GaussianProcess import GP, SobolevCov
 from PyRT_Common import *
 
 
@@ -38,7 +39,7 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 # STEP 0                                                               #
 # Set-up the name of the used methods, and their marker (for plotting) #
 # #################################################################### #
-methods_label = [('MC', 'o')]
+methods_label = [('MC', 'o'), ('BMC', 'x')]
 # methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
 n_methods = len(methods_label)  # number of tested monte carlo methods
 
@@ -78,13 +79,13 @@ ns_min = 20  # minimum number of samples (ns) used for the Monte Carlo estimate
 ns_max = 101  # maximum number of samples (ns) used for the Monte Carlo estimate
 ns_step = 20  # step for the number of samples
 ns_vector = np.arange(start=ns_min, stop=ns_max, step=ns_step)  # the number of samples to use per estimate
-n_estimates = 1  # the number of estimates to perform for each value in ns_vector
+n_estimates = 100  # the number of estimates to perform for each value in ns_vector
 n_samples_count = len(ns_vector)
-n_iterations = 1000  # number of iterations for averaging the MC estimator
 
 # Initialize a matrix of estimate error at zero
 results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
 
+gp = GP(SobolevCov(), Constant(1))
 # ################################# #
 #          MAIN LOOP                #
 # ################################# #
@@ -96,7 +97,7 @@ for k, ns in enumerate(ns_vector):
 
     # Estimate the value of the integral using CMC
     avg_error = []
-    for _ in range(n_iterations):
+    for _ in range(n_estimates):
         sample_set, sample_prob = sample_set_hemisphere(ns, uniform_pdf)
         sample_values = collect_samples(integrand, sample_set)
         estimate_cmc = compute_estimate_cmc(sample_prob, sample_values)
@@ -104,6 +105,19 @@ for k, ns in enumerate(ns_vector):
         avg_error.append(abs_error)
 
     results[k, 0] = np.mean(avg_error)
+
+    n_estimates = 10
+    avg_error = []
+    for _ in range(n_estimates):
+        samples_pos, _ = sample_set_hemisphere(ns, uniform_pdf)
+        samples_val = collect_samples(integrand, samples_pos)
+        gp.add_sample_val(samples_val)
+        gp.add_sample_pos(samples_pos)
+        abs_error = abs(ground_truth - gp.compute_integral_BMC().r)
+        avg_error.append(abs_error)
+
+    results[k, 1] = np.mean(avg_error)
+
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #
