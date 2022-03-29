@@ -105,7 +105,6 @@ class PhongIntegrator(Integrator):
     def compute_color(self, ray):
         # ASSIGNMENT 1.4: PUT YOUR CODE HERE
         hit = self.scene.closest_hit(ray)
-        # light_source = self.scene.pointLights[0]
 
         la = self.compute_ambient_reflection(hit)
         if hit.has_hit:
@@ -148,16 +147,6 @@ class PhongIntegrator(Integrator):
 #  from evaluating the product of all the functions in function_list for a particular sample     #
 #  position.                                                                                     #
 # ############################################################################################## #
-def collect_samples(function_list, sample_pos_):
-    sample_values = []
-    for i in range(len(sample_pos_)):
-        val = 1
-        for j in range(len(function_list)):
-            val *= function_list[j].eval(sample_pos_[i])
-        sample_values.append(RGBColor(val, 0, 0))  # for convenience, we'll only use the red channel
-    return sample_values
-
-
 def compute_estimate_cmc(sample_prob_, sample_values_):
     values = [value / prob for prob, value in zip(sample_prob_, sample_values_)]
     result = BLACK
