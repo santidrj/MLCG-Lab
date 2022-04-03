@@ -173,14 +173,19 @@ DIRECTORY = '.\\out\\'
 # integrator = DepthIntegrator(DIRECTORY + FILENAME, 5)
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
 # integrator = PhongIntegrator(DIRECTORY + FILENAME)
-n = 40
+N_SAMPLES = 40
 # integrator = CMCIntegrator(n, DIRECTORY + FILENAME)
 
-gp = GP(SobolevCov(), Constant(1))
-samples_pos, _ = sample_set_hemisphere(n, UniformPDF())
-gp.add_sample_pos(samples_pos)
+N_GPS = 10
+gps = []
+for i in range(N_GPS):
+    print('\033[K]\r', f'Initialized GPs {i+1}/{N_GPS}', end='')
+    gp = GP(SobolevCov(), Constant(1))
+    samples_pos, _ = sample_set_hemisphere(N_SAMPLES, UniformPDF())
+    gp.add_sample_pos(samples_pos)
+    gps.append(gp)
 
-integrator = BayesianMonteCarloIntegrator(n, gp, DIRECTORY + FILENAME)
+integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME)
 
 # Create the scene
 scene = sphere_test_scene(areaLS=False, use_env_map=True)
