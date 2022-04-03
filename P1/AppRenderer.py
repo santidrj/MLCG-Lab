@@ -174,7 +174,7 @@ DIRECTORY = '.\\out\\'
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
 # integrator = PhongIntegrator(DIRECTORY + FILENAME)
 N_SAMPLES = 40
-# integrator = CMCIntegrator(n, DIRECTORY + FILENAME)
+# integrator = CMCIntegrator(N_SAMPLES, DIRECTORY + FILENAME)
 
 N_GPS = 10
 gps = []
@@ -184,6 +184,8 @@ for i in range(N_GPS):
     samples_pos, _ = sample_set_hemisphere(N_SAMPLES, UniformPDF())
     gp.add_sample_pos(samples_pos)
     gps.append(gp)
+
+print(']033[K]\r')
 
 integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME)
 
