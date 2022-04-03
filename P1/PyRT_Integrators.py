@@ -1,4 +1,4 @@
-from GaussianProcess import compute_estimate_cmc
+from GaussianProcess import compute_estimate_cmc, GP
 from PyRT_Common import *
 
 
@@ -207,7 +207,38 @@ class BayesianMonteCarloIntegrator(Integrator):
         filename_bmc = filename_ + '_BMC_' + str(n) + '_samples' + experiment_name
         super().__init__(filename_bmc)
         self.n_samples = n
-        self.myGP = myGP
+        self.myGP: GP = myGP
 
     def compute_color(self, ray):
-        pass
+        hit = self.scene.closest_hit(ray)
+        if hit.has_hit:
+            exp = 1
+            cosine_term = CosineLobe(exp)
+            hit_point, normal = get_hit_data(hit)
+            li = []
+            brdf = []
+            cosine = []
+            for sample in self.myGP.samples_pos:
+                centered_sample = center_around_normal(sample, normal)
+                second_ray = Ray(hit_point, centered_sample)
+
+                secondary_hit = self.scene.closest_hit(second_ray)
+                _, s_normal = get_hit_data(secondary_hit)
+                if secondary_hit.has_hit:
+                    o = self.scene.object_list[secondary_hit.primitive_index]
+                    li.append(o.emission)
+                else:
+                    if self.scene.env_map:
+                        li.append(self.scene.env_map.getValue(centered_sample))
+                    else:
+                        li.append(BLACK)
+
+                o = self.scene.object_list[hit.primitive_index]
+                brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
+                cosine.append(cosine_term.eval(sample))
+
+            sample_values = [l.multiply(b) * c for l, b, c in zip(li, brdf, cosine)]
+            self.myGP.add_sample_val(sample_values)
+            return self.myGP.compute_integral_BMC()
+
+        return self.scene.env_map.getValue(ray.d)
