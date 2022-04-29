@@ -40,8 +40,7 @@ def collect_samples(function_list, sample_pos_):
 # STEP 0                                                               #
 # Set-up the name of the used methods, and their marker (for plotting) #
 # #################################################################### #
-methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x')]
-# methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
+methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')]
 n_methods = len(methods_label)  # number of tested monte carlo methods
 
 # ######################################################## #
@@ -63,7 +62,6 @@ integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
 uniform_pdf = UniformPDF()
 exponent = 1
 cosine_pdf = CosinePDF(exponent)
-
 
 # ###################################################################### #
 # Compute/set the ground truth value of the integral we want to estimate #
@@ -87,6 +85,7 @@ n_samples_count = len(ns_vector)
 results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
 
 gp = GP(SobolevCov(), Constant(1))
+gp_is = GP(SobolevCov(), Constant(1), cosine_pdf)
 # ################################# #
 #          MAIN LOOP                #
 # ################################# #
@@ -125,6 +124,17 @@ for k, ns in enumerate(ns_vector):
         abs_error = abs(ground_truth - gp.compute_integral_BMC().r)
         avg_error.append(abs_error)
     results[k, 2] = np.mean(avg_error)
+
+    n_estimates = 10
+    avg_error = []
+    for _ in range(n_estimates):
+        samples_pos, _ = sample_set_hemisphere(ns, cosine_pdf)
+        samples_val = collect_samples(integrand, samples_pos)
+        gp_is.add_sample_val(samples_val)
+        gp_is.add_sample_pos(samples_pos)
+        abs_error = abs(ground_truth - gp_is.compute_integral_BMC().r)
+        avg_error.append(abs_error)
+    results[k, 3] = np.mean(avg_error)
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #

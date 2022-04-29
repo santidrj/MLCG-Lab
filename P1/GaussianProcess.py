@@ -62,7 +62,7 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 class GP:
 
     # Initializer
-    def __init__(self, cov_func, p_func, noise_=0.01):
+    def __init__(self, cov_func, p_func, pdf=UniformPDF(), noise_=0.01):
 
         # Attribute containing the covariance function
         self.cov_func = cov_func
@@ -90,6 +90,9 @@ class GP:
         # Sample weights. Contains the value by which each sample y_i must be multiplied to compute the BMC estimate.
         #  See text of Practice 3 for more details.
         self.weights = None
+
+        # PDF used for Importance Sampling
+        self.pdf = pdf
 
     # Method responsible for receiving the vector of sample positions and assigning it to the class attribute sample_pos
     #  Besides that, it also performs the following computations:
@@ -135,11 +138,10 @@ class GP:
         # STEP 1: Set-up the pdf used to sample the integrals. We will use the same pdf for all integral estimates
         # (a uniform pdf). The number of samples used in the estimate is hardcoded (50.000). This is a rather
         # conservative figure which could perhaps be reduced without impairing the final result.
-        uniform_pdf = UniformPDF()
         ns_z = 50000  # number of samples used to estimate z_i
 
         # STEP 2: Generate a samples set for the MC estimate
-        sample_set_z, probab = sample_set_hemisphere(ns_z, uniform_pdf)
+        sample_set_z, probab = sample_set_hemisphere(ns_z, self.pdf)
         ns = len(self.samples_pos)
         z_vec = np.zeros(ns)
 
