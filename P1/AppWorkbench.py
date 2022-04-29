@@ -40,7 +40,7 @@ def collect_samples(function_list, sample_pos_):
 # STEP 0                                                               #
 # Set-up the name of the used methods, and their marker (for plotting) #
 # #################################################################### #
-methods_label = [('MC', 'o'), ('BMC', 'x')]
+methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x')]
 # methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
 n_methods = len(methods_label)  # number of tested monte carlo methods
 
@@ -53,7 +53,7 @@ n_methods = len(methods_label)  # number of tested monte carlo methods
 l_i = Constant(1)
 kd = 1
 brdf = Constant(kd)
-cosine_term = CosineLobe(1)
+cosine_term = CosineLobe(3)
 integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
 
 # ############################################ #
@@ -61,8 +61,8 @@ integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
 # Set-up the pdf used to sample the hemisphere #
 # ############################################ #
 uniform_pdf = UniformPDF()
-# exponent = 1
-# cosine_pdf = CosinePDF(exponent)
+exponent = 1
+cosine_pdf = CosinePDF(exponent)
 
 
 # ###################################################################### #
@@ -104,8 +104,16 @@ for k, ns in enumerate(ns_vector):
         estimate_cmc = compute_estimate_cmc(sample_prob, sample_values)
         abs_error = abs(ground_truth - estimate_cmc.r)
         avg_error.append(abs_error)
-
     results[k, 0] = np.mean(avg_error)
+
+    avg_error = []
+    for _ in range(n_estimates):
+        sample_set, sample_prob = sample_set_hemisphere(ns, cosine_pdf)
+        sample_values = collect_samples(integrand, sample_set)
+        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values)
+        abs_error = abs(ground_truth - estimate_cmc.r)
+        avg_error.append(abs_error)
+    results[k, 1] = np.mean(avg_error)
 
     n_estimates = 10
     avg_error = []
@@ -116,9 +124,7 @@ for k, ns in enumerate(ns_vector):
         gp.add_sample_pos(samples_pos)
         abs_error = abs(ground_truth - gp.compute_integral_BMC().r)
         avg_error.append(abs_error)
-
-    results[k, 1] = np.mean(avg_error)
-
+    results[k, 2] = np.mean(avg_error)
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #
