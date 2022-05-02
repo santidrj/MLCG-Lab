@@ -1,3 +1,4 @@
+import math
 import random as rand
 from typing import List
 
@@ -222,9 +223,10 @@ class BayesianMonteCarloIntegrator(Integrator):
             brdf = []
             cosine = []
             gp = rand.sample(self.myGP, 1)[0]
+            alpha = random() * 2 * pi
             for sample in gp.samples_pos:
-                rotated_sampe = rotate_around_y(random() * 360, sample)
-                centered_sample = center_around_normal(rotated_sampe, normal)
+                rotated_sample = rotate_around_y(alpha, sample)
+                centered_sample = center_around_normal(rotated_sample, normal)
                 second_ray = Ray(hit_point, centered_sample)
 
                 secondary_hit = self.scene.closest_hit(second_ray)
