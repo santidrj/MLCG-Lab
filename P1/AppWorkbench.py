@@ -54,8 +54,8 @@ kd = 1
 brdf = Constant(kd)
 cosine_term = CosineLobe(3)
 p_term = CosineLobe(1)
-integrand = [l_i, brdf, cosine_term, p_term]  # l_i * brdf * cos
-integrand_is_bmc = [l_i, brdf, cosine_term]  # l_i * brdf * cos
+integrand = [l_i, brdf, cosine_term, p_term]
+integrand_is_bmc = [l_i, brdf, cosine_term]
 
 # ############################################ #
 #                 STEP 2                       #
@@ -131,16 +131,16 @@ for k, ns in enumerate(ns_vector):
         avg_error.append(abs_error)
     results[k, 2] = np.mean(avg_error)
 
-    n_estimates = 10
-    avg_error = []
-    for _ in range(n_estimates):
-        samples_pos, _ = sample_set_hemisphere(ns, cosine_pdf)
-        samples_val = collect_samples(integrand_is_bmc, samples_pos)
-        gp_is.add_sample_val(samples_val)
-        gp_is.add_sample_pos(samples_pos)
-        abs_error = abs(ground_truth - gp_is.compute_integral_BMC().r)
-        avg_error.append(abs_error)
-    results[k, 3] = np.mean(avg_error)
+    # n_estimates = 10
+    # avg_error = []
+    # for _ in range(n_estimates):
+    #     samples_pos, _ = sample_set_hemisphere(ns, cosine_pdf)
+    #     samples_val = collect_samples(integrand_is_bmc, samples_pos)
+    #     gp_is.add_sample_val(samples_val)
+    #     gp_is.add_sample_pos(samples_pos)
+    #     abs_error = abs(ground_truth - gp_is.compute_integral_BMC().r)
+    #     avg_error.append(abs_error)
+    # results[k, 3] = np.mean(avg_error)
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #

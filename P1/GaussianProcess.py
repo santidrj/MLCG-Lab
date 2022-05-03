@@ -160,7 +160,8 @@ class GP:
             # ADD YOUR CODE HERE #
             # ################## #
             if self.imp_samp:
-                sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(omega_i) for sample in sample_set_z]
+                sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(omega_i) for sample in
+                                 sample_set_z]
             else:
                 sample_values = [self.cov_func.eval(omega_i, sample) for sample in sample_set_z]
             z_vec[i] = compute_estimate_cmc(probab, sample_values)

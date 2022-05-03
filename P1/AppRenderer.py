@@ -1,6 +1,5 @@
 import time
 
-from P1.GaussianProcess import SobolevCov
 from PyRT_Core import *
 from PyRT_Integrators import *
 
@@ -175,19 +174,20 @@ DIRECTORY = '.\\out\\'
 # integrator = PhongIntegrator(DIRECTORY + FILENAME)
 N_SAMPLES = 40
 # integrator = CMCIntegrator(N_SAMPLES, DIRECTORY + FILENAME)
+integrator = CMCIntegrator(N_SAMPLES, DIRECTORY + FILENAME, important_sampling=True)
 
-N_GPS = 10
-gps = []
-for i in range(N_GPS):
-    print('\033[K]\r', f'Initialized GPs {i+1}/{N_GPS}', end='')
-    gp = GP(SobolevCov(), Constant(1))
-    samples_pos, _ = sample_set_hemisphere(N_SAMPLES, UniformPDF())
-    gp.add_sample_pos(samples_pos)
-    gps.append(gp)
-
-print(']033[K]\r')
-
-integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME)
+# N_GPS = 10
+# gps = []
+# for i in range(N_GPS):
+#     print('\033[K]\r', f'Initialized GPs {i+1}/{N_GPS}', end='')
+#     gp = GP(SobolevCov(), Constant(1))
+#     samples_pos, _ = sample_set_hemisphere(N_SAMPLES, UniformPDF())
+#     gp.add_sample_pos(samples_pos)
+#     gps.append(gp)
+#
+# print(']033[K]\r')
+#
+# integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME)
 
 # Create the scene
 scene = sphere_test_scene(areaLS=False, use_env_map=True)

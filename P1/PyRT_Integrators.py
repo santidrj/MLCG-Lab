@@ -1,4 +1,3 @@
-import math
 import random as rand
 from typing import List
 
@@ -165,8 +164,11 @@ def get_hit_data(hit):
 
 class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
 
-    def __init__(self, n, filename_, experiment_name=''):
-        filename_mc = filename_ + '_MC_' + str(n) + '_samples' + experiment_name
+    def __init__(self, n, filename_, experiment_name='', important_sampling=False):
+        if important_sampling:
+            filename_mc = filename_ + '_MC_IS_' + str(n) + '_samples' + experiment_name
+        else:
+            filename_mc = filename_ + '_MC_' + str(n) + '_samples' + experiment_name
         super().__init__(filename_mc)
         self.n_samples = n
 
@@ -177,7 +179,8 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
             cosine_term = CosineLobe(exp)
             hit_point, normal = get_hit_data(hit)
 
-            sample_set, sample_prob = sample_set_hemisphere(self.n_samples, UniformPDF())
+            # sample_set, sample_prob = sample_set_hemisphere(self.n_samples, UniformPDF()) # CMC
+            sample_set, sample_prob = sample_set_hemisphere(self.n_samples, CosinePDF(1))   # CMC with IS
             li = []
             brdf = []
             cosine = []
