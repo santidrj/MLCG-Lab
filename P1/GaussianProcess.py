@@ -62,7 +62,7 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 class GP:
 
     # Initializer
-    def __init__(self, cov_func, p_func, pdf=UniformPDF(), noise_=0.01):
+    def __init__(self, cov_func, p_func, imp_samp=False, noise_=0.01):
 
         # Attribute containing the covariance function
         self.cov_func = cov_func
@@ -92,7 +92,11 @@ class GP:
         self.weights = None
 
         # PDF used for Importance Sampling
-        self.pdf = pdf
+        self.imp_samp = imp_samp
+        if self.imp_samp:
+            self.pdf = CosinePDF(1)
+        else:
+            self.pdf = UniformPDF()
 
     # Method responsible for receiving the vector of sample positions and assigning it to the class attribute sample_pos
     #  Besides that, it also performs the following computations:
@@ -155,7 +159,10 @@ class GP:
             # ################## #
             # ADD YOUR CODE HERE #
             # ################## #
-            sample_values = [self.cov_func.eval(omega_i, sample) for sample in sample_set_z]
+            if self.imp_samp:
+                sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(omega_i) for sample in sample_set_z]
+            else:
+                sample_values = [self.cov_func.eval(omega_i, sample) for sample in sample_set_z]
             z_vec[i] = compute_estimate_cmc(probab, sample_values)
 
         return z_vec

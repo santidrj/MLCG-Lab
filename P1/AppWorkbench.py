@@ -53,7 +53,9 @@ l_i = Constant(1)
 kd = 1
 brdf = Constant(kd)
 cosine_term = CosineLobe(3)
-integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
+p_term = CosineLobe(1)
+integrand = [l_i, brdf, cosine_term, p_term]  # l_i * brdf * cos
+integrand_is_bmc = [l_i, brdf, cosine_term]  # l_i * brdf * cos
 
 # ############################################ #
 #                 STEP 2                       #
@@ -67,7 +69,11 @@ cosine_pdf = CosinePDF(exponent)
 # Compute/set the ground truth value of the integral we want to estimate #
 # NOTE: in practice, when computing an image, this value is unknown      #
 # ###################################################################### #
-ground_truth = cosine_term.get_integral()  # Assuming that L_i = 1 and BRDF = 1
+p_func_1 = Constant(1)
+p_func_2 = CosineLobe(1)
+# ground_truth = cosine_term.get_integral()  # Assuming that L_i = 1 and BRDF = 1
+samples_set, samples_prob = sample_set_hemisphere(100000, cosine_pdf)
+ground_truth = compute_estimate_cmc(samples_prob, collect_samples(integrand, samples_set)).r
 print('Ground truth: ' + str(ground_truth))
 
 # ################### #
@@ -84,8 +90,8 @@ n_samples_count = len(ns_vector)
 # Initialize a matrix of estimate error at zero
 results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
 
-gp = GP(SobolevCov(), Constant(1))
-gp_is = GP(SobolevCov(), Constant(1), cosine_pdf)
+gp = GP(SobolevCov(), p_func_1)
+gp_is = GP(SobolevCov(), p_func_2, imp_samp=True)
 # ################################# #
 #          MAIN LOOP                #
 # ################################# #
@@ -129,7 +135,7 @@ for k, ns in enumerate(ns_vector):
     avg_error = []
     for _ in range(n_estimates):
         samples_pos, _ = sample_set_hemisphere(ns, cosine_pdf)
-        samples_val = collect_samples(integrand, samples_pos)
+        samples_val = collect_samples(integrand_is_bmc, samples_pos)
         gp_is.add_sample_val(samples_val)
         gp_is.add_sample_pos(samples_pos)
         abs_error = abs(ground_truth - gp_is.compute_integral_BMC().r)
