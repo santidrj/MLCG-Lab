@@ -160,7 +160,7 @@ class GP:
             # ADD YOUR CODE HERE #
             # ################## #
             if self.imp_samp:
-                sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(omega_i) for sample in
+                sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(sample) for sample in
                                  sample_set_z]
             else:
                 sample_values = [self.cov_func.eval(omega_i, sample) for sample in sample_set_z]

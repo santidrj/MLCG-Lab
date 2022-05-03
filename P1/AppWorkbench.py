@@ -54,8 +54,8 @@ kd = 1
 brdf = Constant(kd)
 cosine_term = CosineLobe(3)
 p_term = CosineLobe(1)
-integrand = [l_i, brdf, cosine_term, p_term]
-integrand_is_bmc = [l_i, brdf, cosine_term]
+integrand = [cosine_term, p_term]
+integrand_is_bmc = [cosine_term]
 
 # ############################################ #
 #                 STEP 2                       #
