@@ -1,5 +1,6 @@
 import time
 
+from P1.GaussianProcess import SobolevCov
 from PyRT_Core import *
 from PyRT_Integrators import *
 
@@ -201,9 +202,9 @@ elif integrator_type == CMC:
 elif integrator_type == BMC:
     gps = []
     for i in range(N_GPS):
-        print('\033[K]\r', f'Initialized GPs {i + 1}/{N_GPS}', end='')
+        print(f'\033[K]\rInitialized GPs {i + 1}/{N_GPS}', end='')
         if IMPORTANCE_SAMPLING:
-            gp = GP(SobolevCov(), CosineLobe(1))
+            gp = GP(SobolevCov(), CosineLobe(1), imp_samp=True)
             samples_pos, _ = sample_set_hemisphere(N_SAMPLES, CosinePDF(1))
         else:
             gp = GP(SobolevCov(), Constant(1))
@@ -211,9 +212,7 @@ elif integrator_type == BMC:
         gp.add_sample_pos(samples_pos)
         gps.append(gp)
 
-    print('\033[K]\r')
-
-    print('Using BayesianMonteCarloIntegrator', 'with importance sampling' if IMPORTANCE_SAMPLING else '')
+    print('\033[K]\rUsing BayesianMonteCarloIntegrator', 'with importance sampling' if IMPORTANCE_SAMPLING else '')
     integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME,
                                               importance_sampling=IMPORTANCE_SAMPLING)
 
