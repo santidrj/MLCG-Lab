@@ -165,6 +165,7 @@ def get_hit_data(hit):
 class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
 
     def __init__(self, n, filename_, experiment_name='', important_sampling=False):
+        self.imp_samp = important_sampling
         if important_sampling:
             filename_mc = filename_ + '_MC_IS_' + str(n) + '_samples' + experiment_name
         else:
@@ -179,8 +180,11 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
             cosine_term = CosineLobe(exp)
             hit_point, normal = get_hit_data(hit)
 
-            # sample_set, sample_prob = sample_set_hemisphere(self.n_samples, UniformPDF()) # CMC
-            sample_set, sample_prob = sample_set_hemisphere(self.n_samples, CosinePDF(1))   # CMC with IS
+            if self.imp_samp:
+                sample_set, sample_prob = sample_set_hemisphere(self.n_samples, CosinePDF(1))  # CMC with IS
+            else:
+                sample_set, sample_prob = sample_set_hemisphere(self.n_samples, UniformPDF())  # CMC
+
             li = []
             brdf = []
             cosine = []
@@ -210,8 +214,12 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
 
 
 class BayesianMonteCarloIntegrator(Integrator):
-    def __init__(self, n, myGP, filename_, experiment_name=''):
-        filename_bmc = filename_ + '_BMC_' + str(n) + '_samples' + experiment_name
+    def __init__(self, n, myGP, filename_, experiment_name='', importance_sampling=False):
+        self.importance_sampling = importance_sampling
+        if self.importance_sampling:
+            filename_bmc = filename_ + '_BMC_IS_' + str(n) + '_samples' + experiment_name
+        else:
+            filename_bmc = filename_ + '_BMC_' + str(n) + '_samples' + experiment_name
         super().__init__(filename_bmc)
         self.n_samples = n
         self.myGP: List[GP] = myGP
@@ -219,12 +227,9 @@ class BayesianMonteCarloIntegrator(Integrator):
     def compute_color(self, ray):
         hit = self.scene.closest_hit(ray)
         if hit.has_hit:
-            exp = 1
-            cosine_term = CosineLobe(exp)
             hit_point, normal = get_hit_data(hit)
             li = []
             brdf = []
-            cosine = []
             gp = rand.sample(self.myGP, 1)[0]
             alpha = random() * 2 * pi
             for sample in gp.samples_pos:
@@ -244,10 +249,12 @@ class BayesianMonteCarloIntegrator(Integrator):
                         li.append(BLACK)
 
                 o = self.scene.object_list[hit.primitive_index]
-                brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
-                cosine.append(cosine_term.eval(sample))
+                if self.importance_sampling:
+                    brdf.append(o.get_BRDF().kd)
+                else:
+                    brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
 
-            sample_values = [l.multiply(b) * c for l, b, c in zip(li, brdf, cosine)]
+            sample_values = [l_i.multiply(b) for l_i, b in zip(li, brdf)]
             gp.add_sample_val(sample_values)
             return gp.compute_integral_BMC()
 

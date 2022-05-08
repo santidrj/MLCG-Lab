@@ -167,27 +167,55 @@ DIRECTORY = '.\\out\\'
 
 # -------------------------------------------------Main
 # Create Integrator
-# integrator = LazyIntegrator(DIRECTORY + FILENAME)
-# integrator = IntersectionIntegrator(DIRECTORY + FILENAME)
-# integrator = DepthIntegrator(DIRECTORY + FILENAME, 5)
-# integrator = NormalIntegrator(DIRECTORY + FILENAME)
-# integrator = PhongIntegrator(DIRECTORY + FILENAME)
-N_SAMPLES = 40
-# integrator = CMCIntegrator(N_SAMPLES, DIRECTORY + FILENAME)
-integrator = CMCIntegrator(N_SAMPLES, DIRECTORY + FILENAME, important_sampling=True)
+LAZY = 'lazy'
+INTERSECTION = 'intersection'
+DEPTH = 'depth'
+NORMAL = 'normal'
+PHONG = 'phong'
+CMC = 'cmc'
+BMC = 'bmc'
 
-# N_GPS = 10
-# gps = []
-# for i in range(N_GPS):
-#     print('\033[K]\r', f'Initialized GPs {i+1}/{N_GPS}', end='')
-#     gp = GP(SobolevCov(), Constant(1))
-#     samples_pos, _ = sample_set_hemisphere(N_SAMPLES, UniformPDF())
-#     gp.add_sample_pos(samples_pos)
-#     gps.append(gp)
-#
-# print(']033[K]\r')
-#
-# integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME)
+N_SAMPLES = 40
+N_GPS = 10
+IMPORTANCE_SAMPLING = True
+integrator_type = BMC
+
+if integrator_type == LAZY:
+    print('Using LazyIntegrator')
+    integrator = LazyIntegrator(DIRECTORY + FILENAME)
+elif integrator_type == INTERSECTION:
+    print('Using IntersectionIntegrator')
+    integrator = IntersectionIntegrator(DIRECTORY + FILENAME)
+elif integrator_type == DEPTH:
+    print('Using DepthIntegrator')
+    integrator = DepthIntegrator(DIRECTORY + FILENAME, 5)
+elif integrator_type == NORMAL:
+    print('Using NormalIntegrator')
+    integrator = NormalIntegrator(DIRECTORY + FILENAME)
+elif integrator_type == PHONG:
+    print('Using PhongIntegrator')
+    integrator = PhongIntegrator(DIRECTORY + FILENAME)
+elif integrator_type == CMC:
+    print('Using CMCIntegrator', 'with importance sampling' if IMPORTANCE_SAMPLING else '')
+    integrator = CMCIntegrator(N_SAMPLES, DIRECTORY + FILENAME, important_sampling=IMPORTANCE_SAMPLING)
+elif integrator_type == BMC:
+    gps = []
+    for i in range(N_GPS):
+        print('\033[K]\r', f'Initialized GPs {i + 1}/{N_GPS}', end='')
+        if IMPORTANCE_SAMPLING:
+            gp = GP(SobolevCov(), CosineLobe(1))
+            samples_pos, _ = sample_set_hemisphere(N_SAMPLES, CosinePDF(1))
+        else:
+            gp = GP(SobolevCov(), Constant(1))
+            samples_pos, _ = sample_set_hemisphere(N_SAMPLES, UniformPDF())
+        gp.add_sample_pos(samples_pos)
+        gps.append(gp)
+
+    print('\033[K]\r')
+
+    print('Using BayesianMonteCarloIntegrator', 'with importance sampling' if IMPORTANCE_SAMPLING else '')
+    integrator = BayesianMonteCarloIntegrator(N_SAMPLES, gps, DIRECTORY + FILENAME,
+                                              importance_sampling=IMPORTANCE_SAMPLING)
 
 # Create the scene
 scene = sphere_test_scene(areaLS=False, use_env_map=True)

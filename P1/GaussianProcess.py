@@ -147,7 +147,11 @@ class GP:
         # STEP 2: Generate a samples set for the MC estimate
         sample_set_z, probab = sample_set_hemisphere(ns_z, self.pdf)
         ns = len(self.samples_pos)
-        z_vec = np.zeros(ns)
+        if isinstance(self.p_func, Function):
+            z_vec = np.zeros(ns)
+        else:
+            z_vec = np.zeros(ns, dtype=type(self.p_func[0]))
+
 
         # STEP 3: Compute each z_i element of z
         # for each sample in our GP model
@@ -160,8 +164,12 @@ class GP:
             # ADD YOUR CODE HERE #
             # ################## #
             if self.imp_samp:
-                sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(sample) for sample in
-                                 sample_set_z]
+                if isinstance(self.p_func, Function):
+                    sample_values = [self.cov_func.eval(omega_i, sample) * self.p_func.eval(sample) for sample in
+                                     sample_set_z]
+                else:
+                    sample_values = [p * self.cov_func.eval(omega_i, sample) for sample, p in
+                                     zip(sample_set_z, self.p_func)]
             else:
                 sample_values = [self.cov_func.eval(omega_i, sample) for sample in sample_set_z]
             z_vec[i] = compute_estimate_cmc(probab, sample_values)
@@ -175,7 +183,11 @@ class GP:
         # ################## #
         # ADD YOUR CODE HERE #
         # ################## #
-        for w, s in zip(self.weights, self.samples_val):
-            res += s * w
+        if isinstance(self.p_func, Function):
+            for w, s in zip(self.weights, self.samples_val):
+                res += s * w
+        else:
+            for w, s in zip(self.weights, self.samples_val):
+                res += s.multiply(w)
 
         return res
