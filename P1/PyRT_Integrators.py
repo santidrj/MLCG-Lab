@@ -176,8 +176,6 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
     def compute_color(self, ray):
         hit = self.scene.closest_hit(ray)
         if hit.has_hit:
-            exp = 1
-            cosine_term = CosineLobe(exp)
             hit_point, normal = get_hit_data(hit)
 
             if self.imp_samp:
@@ -205,9 +203,8 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
 
                 o = self.scene.object_list[hit.primitive_index]
                 brdf.append(o.get_BRDF().get_value(second_ray.d, ray.d, normal))
-                cosine.append(cosine_term.eval(sample))
 
-            sample_values = [l.multiply(b) * c for l, b, c in zip(li, brdf, cosine)]
+            sample_values = [l.multiply(b) for l, b in zip(li, brdf)]
             return compute_estimate_cmc(sample_prob, sample_values)
 
         return self.scene.env_map.getValue(ray.d)
